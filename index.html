@@ -160,5 +160,49 @@ canvas {
     .btn-big { padding: 15px 30px; border:none; border-radius:10px; font-size:18px; font-weight:bold; cursor:pointer; transition:0.2s; background:white; color:#6c5ce7; }
     .btn-big:active { transform: scale(0.95); }
 </style>
+    // index.html 底部
+const board = new DrawingBoard('mainCanvas', (data) => {
+    // 只有作画者发出的数据才广播
+    data.cat = 'paint';
+    network.send(data);
+});
+
+// 修改 engine.js 的 send 方法
+class GameEngine {
+    // ... 前面保持不变 ...
+
+    send(type) {
+        const input = document.getElementById(type + '-input');
+        const val = input.value.trim();
+        if(!val) return;
+
+        // 1. 自己屏幕上显示
+        this.appendMsg(type, '我', val);
+
+        // 2. 发送给对方
+        network.send({ cat: 'chat', type: type, msg: val });
+        
+        // 3. 如果我是房主，自己猜词也要判断
+        if (network.isHost && type === 'guess') {
+            this.checkAnswer(val);
+        }
+
+        input.value = '';
+    }
+
+    checkAnswer(val) {
+        if (val === this.currentWord) {
+            // 猜对了！广播胜利消息
+            network.send({ cat: 'game', type: 'win', ans: this.currentWord });
+            this.endGame(true, this.currentWord);
+        }
+    }
+    
+    startGame() {
+        // ... 原有逻辑 ...
+        // 通知玩家游戏开始
+        network.send({ cat: 'game', type: 'start' });
+    }
+}
 </body>
 </html>
