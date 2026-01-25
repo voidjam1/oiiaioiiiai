@@ -19,6 +19,43 @@
         #lobby-overlay h1 { font-size: 2rem; margin-bottom: 20px; }
 .btn-big { min-width: 200px; padding: 15px; } /* 确保 iPad 上好点 */
         @media (max-width: 1024px) { body { grid-template-areas: "header" "stage" "interaction"; grid-template-columns: 1fr; grid-template-rows: 60px 40vh 1fr; } .side-panel { display: none; } }
+        /* 侧滑菜单样式 */
+.side-panel {
+    position: fixed;
+    left: -260px; /* 初始隐藏 */
+    top: 60px;
+    bottom: 0;
+    width: 240px;
+    background: white;
+    z-index: 100;
+    transition: 0.3s;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    display: flex !important; /* 强制显示 */
+}
+
+.side-panel.open {
+    left: 0;
+}
+
+/* 侧滑触发按钮 */
+#menu-toggle {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+/* 遮罩层：点空白处关闭菜单 */
+#menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 90;
+}
     </style>
 </head>
 <body>
@@ -43,7 +80,17 @@
     </div>
     <div id="word-display">等待开始...</div>
     <div id="timer">⏱️ 60s</div>
+    
 </header>
+
+<header>
+    <button id="menu-toggle" onclick="toggleMenu()">☰ 菜单</button>
+    <div style="font-weight: bold; color: var(--primary);">GARTIC LITE</div>
+    <div id="word-display">等待开始...</div>
+    <div id="timer">⏱️ 60s</div>
+</header>
+
+<div id="menu-overlay" onclick="toggleMenu()"></div>
 
 <aside class="side-panel">
     <div style="background:#fff; padding:15px; border-radius:10px;">
@@ -85,6 +132,22 @@
         network.send(data);
     });
     const engine = new GameEngine(board);
+
+    function toggleMenu() {
+    const panel = document.querySelector('.side-panel');
+    const overlay = document.getElementById('menu-overlay');
+    panel.classList.toggle('open');
+    overlay.style.display = panel.classList.contains('open') ? 'block' : 'none';
+}
+
+// 自动复制扩展：如果想在主界面点击顶部房号复制
+function copyRoomID() {
+    const id = network.peer ? network.peer.id : "";
+    if (id) {
+        navigator.clipboard.writeText(id);
+        alert("房号已复制: " + id);
+    }
+}
 </script>
 </body>
 </html>
