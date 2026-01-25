@@ -17,58 +17,49 @@ class DrawingBoard {
         };
         window.addEventListener('resize', resize);
         resize();
-
         this.canvas.addEventListener('pointerdown', e => this.start(e));
         this.canvas.addEventListener('pointermove', e => this.draw(e));
-        window.addEventListener('pointerup', () => this.stop());
+        window.addEventListener('pointerup', () => this.isDrawing = false);
     }
 
     start(e) {
         this.isDrawing = true;
-        const x = e.offsetX / this.canvas.width;
-        const y = e.offsetY / this.canvas.height;
         this.ctx.beginPath();
         this.ctx.moveTo(e.offsetX, e.offsetY);
-        if (this.callback) this.callback({ type: 'start', x, y });
+        this.callback({ type: 'start', x: e.offsetX/this.canvas.width, y: e.offsetY/this.canvas.height });
     }
 
     draw(e) {
         if (!this.isDrawing) return;
-        const x = e.offsetX / this.canvas.width;
-        const y = e.offsetY / this.canvas.height;
-        this.ctx.strokeStyle = document.getElementById('colorPicker').value;
-        this.ctx.lineWidth = document.getElementById('sizePicker').value;
+        const color = document.getElementById('colorPicker').value;
+        const size = document.getElementById('sizePicker').value;
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = size;
         this.ctx.lineTo(e.offsetX, e.offsetY);
         this.ctx.stroke();
-        if (this.callback) this.callback({ type: 'draw', x, y, color: this.ctx.strokeStyle, width: this.ctx.lineWidth });
+        this.callback({ type: 'draw', x: e.offsetX/this.canvas.width, y: e.offsetY/this.canvas.height, color, width: size });
     }
-
-    stop() { this.isDrawing = false; }
 
     drawRemote(data) {
-    // 关键点：将 0-1 的比例还原为对方屏幕的实际像素
-    const x = data.x * this.canvas.width;
-    const y = data.y * this.canvas.height;
-
-    if (data.type === 'start') {
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y);
-    } else if (data.type === 'draw') {
-        this.ctx.strokeStyle = data.color || '#000';
-        this.ctx.lineWidth = data.width || 5;
-        this.ctx.lineTo(x, y);
-        this.ctx.stroke();
-    } else if (data.clear) {
-        this.clear(true);
+        const x = data.x * this.canvas.width;
+        const y = data.y * this.canvas.height;
+        if (data.type === 'start') {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+        } else if (data.type === 'draw') {
+            this.ctx.strokeStyle = data.color;
+            this.ctx.lineWidth = data.width;
+            this.ctx.lineTo(x, y);
+            this.ctx.stroke();
+        } else if (data.clear) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
     }
-}
 
     clear(remote = false) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        if (!remote && this.callback) this.callback({ type: 'start', x:0, y:0, clear: true }); // 模拟清除信号
+        if (!remote) this.callback({ clear: true });
     }
 
-    setLock(locked) {
-        this.canvas.style.pointerEvents = locked ? 'none' : 'auto';
-    }
+    setLock(l) { this.canvas.style.pointerEvents = l ? 'none' : 'auto'; }
 }
