@@ -146,7 +146,12 @@ function copyRoomID() {
         });
     }
 }
-
+// 确保在 window.onload 之后初始化，保证能找到 HTML 元素
+window.onload = () => {
+    engine.initThemes(); // 加载词库
+    // 如果有需要，可以默认打开一次菜单引导用户
+    console.log("游戏引擎与词库已就绪");
+};
 // 建议在 HTML 里给 idSpan 加一个 onclick="copyRoomID()"
 </script>
 </body>
