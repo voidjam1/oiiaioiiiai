@@ -5,18 +5,36 @@ class NetworkManager {
         this.isHost = false;
     }
 
-    createRoom() {
-        this.isHost = true;
-        this.peer = new Peer();
-        this.peer.on('open', id => {
-            document.getElementById('my-room-id').innerText = id;
-            document.getElementById('room-id-display').style.display = 'block';
-        });
-        this.peer.on('connection', c => {
-            this.conn = c;
-            this.setup();
-        });
-    }
+ createRoom() {
+    this.isHost = true;
+    this.peer = new Peer(); // 也可以使用 Peer('简短ID')，但不保证唯一
+    
+    this.peer.on('open', id => {
+        // 把生成的长 ID 显示在紫色屏幕上
+        document.getElementById('my-room-id').innerText = id;
+        document.getElementById('room-id-display').style.display = 'block';
+        
+        // --- 核心改动：1.5秒后自动进入房间 ---
+        setTimeout(() => {
+            document.getElementById('lobby-overlay').style.display = 'none';
+            // 顺便更新一下主界面的提示信息
+            const wordDisplay = document.getElementById('word-display');
+            if(wordDisplay) wordDisplay.innerText = "等待好友加入...";
+            
+            // 建议在控制台打印一下，方便调试
+            console.log("房主已就绪，房号:", id);
+        }, 1500); 
+    });
+
+    this.peer.on('connection', c => {
+        this.conn = c;
+        this.setup();
+        // 玩家进来时，发个系统广播
+        setTimeout(() => {
+            engine.appendMsg('system', '👥 好友已进入房间！', 'green');
+        }, 500);
+    });
+}
 
     joinRoom() {
         const id = document.getElementById('target-id').value.trim();
