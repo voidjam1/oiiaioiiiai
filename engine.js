@@ -10,16 +10,31 @@ class GameEngine {
     }
 
     startNewRound() {
-        if (!network.isHost) return;
-        this.round++;
-        const word = this.words[Math.floor(Math.random() * this.words.length)];
-        const drawer = (this.round % 2 !== 0) ? 'host' : 'guest';
-        
-        const data = { cat: 'game', type: 'newRound', word, drawer, round: this.round };
-        this.handleNewRound(data);
-        network.send(data);
-        this.startTimer(60);
-    }
+    if (!network.isHost) return alert("只有房主能开始游戏哦！");
+    
+    this.round++;
+    // 从词库随机选词，如果没有词库就用默认的
+    const words = this.words || ["猫", "狗", "汉堡", "iPad"];
+    const word = words[Math.floor(Math.random() * words.length)];
+    
+    // 决定谁画（奇数局房主画，偶数局客人画）
+    const drawer = (this.round % 2 !== 0) ? 'host' : 'guest';
+    
+    const gameConfig = { 
+        cat: 'game', 
+        type: 'newRound', 
+        word, 
+        drawer, 
+        round: this.round 
+    };
+
+    // 1. 自己先更新界面
+    this.handleNewRound(gameConfig);
+    // 2. 发送给对方，让对方也更新界面
+    network.send(gameConfig);
+    
+    console.log("新回合已发起:", gameConfig);
+}
 
     handleNewRound(data) {
         this.currentWord = data.word;
