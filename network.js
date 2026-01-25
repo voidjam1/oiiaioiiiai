@@ -97,5 +97,93 @@ class NetworkManager {
         }
     }
 }
+/**
+ * network.js (增强版)
+ */
+class NetworkManager {
+    constructor() {
+        this.peer = null;
+        this.conn = null;
+        this.isHost = false;
+        this.myId = null;
+    }
+
+    // --- 建立连接部分 (保持原有逻辑) ---
+    createRoom() {
+        this.isHost = true;
+        this.peer = new Peer();
+        this.peer.on('open', (id) => {
+            this.myId = id;
+            document.getElementById('my-room-id').innerText = id;
+            document.getElementById('room-id-display').style.display = 'block';
+        });
+        this.peer.on('connection', (conn) => {
+            this.conn = conn;
+            this.setupConnection();
+            document.getElementById('lobby-overlay').style.display = 'none';
+        });
+    }
+
+    joinRoom() {
+        const targetId = document.getElementById('target-id').value.trim();
+        this.isHost = false;
+        this.peer = new Peer();
+        this.peer.on('open', () => {
+            this.conn = this.peer.connect(targetId);
+            this.setupConnection();
+        });
+    }
+
+    setupConnection() {
+        this.conn.on('open', () => {
+            document.getElementById('lobby-overlay').style.display = 'none';
+            console.log("P2P 连接已建立");
+        });
+        this.conn.on('data', (data) => this.handleData(data));
+    }
+
+    send(data) {
+        if (this.conn && this.conn.open) this.conn.send(data);
+    }
+
+    // --- 【这是重点】升级后的数据分发中心 ---
+    handleData(data) {
+        switch (data.cat) {
+            case 'paint':
+                // 对方画一笔，我这里同步一笔
+                board.drawRemote(data);
+                break;
+
+            case 'chat':
+                // 收到对方的消息（聊天或猜谜）
+                engine.appendMsg(data.type, '对方', data.msg);
+                break;
+
+            case 'game':
+                // 核心：处理来自房主的“裁判指令”
+                this.handleGameSignal(data);
+                break;
+        }
+    }
+
+    handleGameSignal(data) {
+        if (data.type === 'newRound') {
+            // 收到新回合：更新身份、题目、倒计时
+            engine.handleNewRound(data);
+        } 
+        else if (data.type === 'tick') {
+            // 同步房主的倒计时
+            engine.updateTimerUI(data.time);
+        }
+        else if (data.type === 'correct') {
+            // 对方判定猜对了，全员结束
+            engine.handleGameOver(true, '对方');
+        }
+        else if (data.type === 'timeout') {
+            // 对方判定超时，全员结束
+            engine.handleGameOver(false);
+        }
+    }
+}
 
 const network = new NetworkManager();
