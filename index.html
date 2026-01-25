@@ -140,14 +140,17 @@
     overlay.style.display = panel.classList.contains('open') ? 'block' : 'none';
 }
 
-// 自动复制扩展：如果想在主界面点击顶部房号复制
+// 在 network.js 赋值 ID 后，可以调用这个
 function copyRoomID() {
-    const id = network.peer ? network.peer.id : "";
-    if (id) {
-        navigator.clipboard.writeText(id);
-        alert("房号已复制: " + id);
+    const idText = document.getElementById('my-room-id').innerText;
+    if (idText && idText !== "生成中...") {
+        navigator.clipboard.writeText(idText).then(() => {
+            alert("房号已复制，快发给朋友吧！🚀");
+        });
     }
 }
+
+// 建议在 HTML 里给 idSpan 加一个 onclick="copyRoomID()"
 </script>
 </body>
 </html>
