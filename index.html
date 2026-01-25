@@ -54,6 +54,24 @@
 
         .msg-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 14px; border-radius: 10px; }
         .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        /* 核心修复：锁死页面滚动 */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* 禁止溢出滚动 */
+    overscroll-behavior: none; /* 禁止橡皮筋回弹效果 */
+    position: fixed; /* 强制固定视口 */
+    touch-action: none; /* 禁止所有原生触摸行为 */
+}
+
+/* 确保画布层级正确且拦截所有手势 */
+canvas {
+    touch-action: none; /* 关键：告诉浏览器这个区域由代码接管，不要触发滚动 */
+    user-select: none;
+    -webkit-user-select: none;
+}
     </style>
 </head>
 <body>
@@ -102,7 +120,14 @@
         <button class="send-btn" style="background:#f1c40f" onclick="engine.send('guess')">🎯</button>
     </div>
 </div>
-
+<div class="card">
+    <h4>🏠 房间设置</h4>
+    <select id="theme-select" style="width:100%; padding:8px; margin-bottom:10px;"></select>
+    
+    <button id="start-btn" class="send-btn" style="width:100%; border-radius:5px" onclick="engine.startGame()">
+        开始游戏
+    </button>
+</div>
 <script src="painter.js"></script>
 <script src="engine.js"></script>
 <script>
