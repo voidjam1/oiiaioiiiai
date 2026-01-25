@@ -3,171 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gartic Pro | iPad 适配版 🖌️</title>
+    <title>Gartic Pro | 全平台竞技场 🖌️</title>
     <style>
         :root {
-            --primary: #6c5ce7;
-            --secondary: #a29bfe;
-            --bg: #f5f6fa;
-            --card-bg: #ffffff;
-            --chat-bg: #f9f9fb;
-            --guess-bg: #fffcf0;
+            --primary: #6c5ce7; --bg: #f5f6fa; --panel: #ffffff;
+            --chat-bg: #f1f2f6; --guess-bg: #fff9db;
         }
 
         body {
-            font-family: 'PingFang SC', system-ui, sans-serif;
-            background: var(--bg);
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* 防止页面整体滚动，只允许局部滚动 */
-        }
-
-        /* 顶部状态栏：更显眼的指示 */
-        header {
-            height: 70px;
-            background: var(--card-bg);
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-            z-index: 100;
-        }
-
-        .header-center { text-align: center; }
-        .word-box { font-size: 1.4rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; }
-
-        /* 主容器：响应式关键 */
-        .main-wrapper {
-            display: flex;
-            flex: 1;
-            padding: 15px;
-            gap: 15px;
-            box-sizing: border-box;
-            height: calc(100vh - 70px);
-        }
-
-        /* 左侧面板：在平板上可以自适应缩小或折叠 */
-        .side-panel {
-            width: 240px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        /* 画布区：必须是视觉核心 */
-        .canvas-container {
-            flex: 1;
-            background: #fff;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            border: 4px solid var(--primary); /* 让画布更醒目 */
-            position: relative;
-        }
-
-        canvas { flex: 1; cursor: crosshair; touch-action: none; width: 100%; height: 100%; }
-
-        /* 交互区：聊天与猜谜并列 */
-        .interaction-panel {
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .msg-box {
-            flex: 1;
-            background: var(--card-bg);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg); margin: 0; height: 100vh;
+            display: grid;
+            grid-template-areas: 
+                "header header header"
+                "side stage interaction";
+            grid-template-columns: 240px 1fr 320px;
+            grid-template-rows: 60px 1fr;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        .scroll-area { flex: 1; overflow-y: auto; padding: 12px; }
-
-        /* 输入区域优化：增加发送按钮 */
-        .input-group {
-            display: flex;
-            padding: 10px;
-            background: #fff;
-            border-top: 1px solid #eee;
-            gap: 8px;
-        }
-
-        .input-group input {
-            flex: 1;
-            border: none;
-            background: #f1f1f1;
-            padding: 12px 15px;
-            border-radius: 10px;
-            outline: none;
-        }
-
-        .send-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        /* --- iPad 竖屏专用适配策略 --- */
-        @media (max-width: 1024px) and (orientation: portrait) {
-            .main-wrapper { flex-direction: column; }
-            .side-panel { 
-                width: 100%; 
-                flex-direction: row; /* 设置并列显示 */
-                height: auto; 
-            }
-            .side-panel .card { flex: 1; }
-            .canvas-container { height: 45vh; flex: none; }
-            .interaction-panel { 
-                width: 100%; 
-                flex-direction: row; 
-                flex: 1;
-                min-height: 200px;
+        /* iPad 竖屏与手机适配：改为垂直流动 */
+        @media (max-width: 1024px) {
+            body {
+                grid-template-areas: 
+                    "header"
+                    "stage"
+                    "side"
+                    "interaction";
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 45vh auto 1fr;
+                overflow-y: auto;
             }
         }
 
-        .card { background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        header { grid-area: header; background: var(--panel); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .side-panel { grid-area: side; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .stage-area { grid-area: stage; position: relative; background: #fff; margin: 10px; border-radius: 16px; border: 3px solid var(--primary); display: flex; flex-direction: column; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .interaction-panel { grid-area: interaction; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+
+        /* 画布覆盖层：游戏结束时锁定 */
+        #canvas-lock {
+            display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.7);
+            z-index: 10; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+
+        /* 统一输入框组件 */
+        .input-group { display: flex; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; }
+        .input-group input { flex: 1; border: none; padding: 12px; outline: none; }
+        .send-btn { background: var(--primary); color: white; border: none; width: 50px; cursor: pointer; font-weight: bold; }
+
+        .msg-list { flex: 1; overflow-y: auto; padding: 10px; font-size: 14px; border-radius: 10px; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <header>
-    <div>🎮 <span id="player-id">User_1024</span></div>
-    <div class="header-center">
-        <div id="status-text" style="font-size: 12px; color: #888;">正在等待开局...</div>
-        <div class="word-box" id="target-word">????</div>
-    </div>
+    <div style="font-weight: 900; color: var(--primary);">GARTIC LITE</div>
+    <div id="word-display" style="font-size: 1.2rem; font-weight: bold;">等待开始...</div>
     <div id="timer">⏱️ 00:60</div>
 </header>
 
-<div class="main-wrapper">
-    <aside class="side-panel">
-        <div class="card">
-            <h4 style="margin:0 0 10px">🏠 房间设置</h4>
-            <select id="theme-select" style="width:100%; padding:5px;"></select>
+<aside class="side-panel">
+    <div class="card">
+        <h4>🏠 房间设置</h4>
+        <select id="theme-select" style="width:100%"></select>
+        <button class="send-btn" style="width:100%; margin-top:10px; border-radius:5px" onclick="engine.startGame()">开始</button>
+    </div>
+    <div class="card" id="players">
+        <h4>👥 玩家榜</h4>
         </div>
-        <div class="card">
-            <h4 style="margin:0 0 10px">👥 玩家列表</h4>
-            <div id="score-board" style="font-size:14px;">你: 0 pts</div>
-        </div>
-    </aside>
+</aside>
 
-    <main class="canvas-container">
-        <canvas id="gameCanvas"></canvas>
-        <div class="toolbar" id="painter-tools">
-            <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(255,255,255,0.9); padding:10px 20px; border-radius:50px; display:flex; gap:15px; box-shadow:0
+<main class="stage-area">
+    <div id="canvas-lock">
+        <h3>本局结束！</h3>
+        <button onclick="board.download()">💾 下载画作</button>
+    </div>
+    <canvas id="mainCanvas"></canvas>
+    <div id="painter-tools" style="padding:10px; display:flex; gap:15px; border-top:1px solid #eee;">
+        <input type="color" id="colorPicker" value="#6c5ce7">
+        <input type="range" id="sizePicker" min="1" max="20" value="5">
+        <button onclick="board.clear()">🧹 清空</button>
+        <button onclick="board.undo()">↩️ 撤销</button>
+    </div>
+</main>
+
+<div class="interaction-panel">
+    <div class="card msg-list" id="chat-list" style="background: var(--chat-bg);"></div>
+    <div class="input-group">
+        <input type="text" id="chat-input" placeholder="聊天...">
+        <button class="send-btn" onclick="engine.send('chat')">➤</button>
+    </div>
+    
+    <div class="card msg-list" id="guess-list" style="background: var(--guess-bg);"></div>
+    <div class="input-group" style="border-color: #f1c40f;">
+        <input type="text" id="guess-input" placeholder="猜猜是什么？">
+        <button class="send-btn" style="background:#f1c40f" onclick="engine.send('guess')">🎯</button>
+    </div>
+</div>
+
+<script src="painter.js"></script>
+<script src="engine.js"></script>
+<script>
+    const board = new DrawingBoard('mainCanvas');
+    const engine = new GameEngine(board);
+</script>
+</body>
+</html>
