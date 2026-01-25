@@ -7,23 +7,29 @@ class NetworkManager {
 
  createRoom() {
     this.isHost = true;
-    this.peer = new Peer();
+    this.peer = new Peer(); // 创建 Peer 实例
     
     this.peer.on('open', id => {
-        const idDisplay = document.getElementById('my-room-id');
-        idDisplay.innerText = id;
+        // 1. 显示 ID
+        const idSpan = document.getElementById('my-room-id');
+        idSpan.innerText = id;
         document.getElementById('room-id-display').style.display = 'block';
         
-        // --- 核心改动：一键复制逻辑 ---
-        idDisplay.style.cursor = "pointer";
-        idDisplay.title = "点击复制房号";
-        idDisplay.onclick = () => {
-            navigator.clipboard.writeText(id).then(() => {
-                const originalText = idDisplay.innerText;
-                idDisplay.innerText = "✅ 已复制！";
-                setTimeout(() => idDisplay.innerText = originalText, 2000);
-            });
-        };
+        // 2. 这里的重点：1秒后自动进入房间
+        setTimeout(() => {
+            document.getElementById('lobby-overlay').style.display = 'none'; // 隐藏紫色屏幕
+            document.getElementById('word-display').innerText = "等待好友加入...";
+            console.log("房主已就绪，房号:", id);
+        }, 1000);
+    });
+
+    this.peer.on('connection', c => {
+        this.conn = c;
+        this.setup();
+        // 好友进来时提醒
+        engine.appendMsg('system', '✅ 好友已上线！可以开始游戏了', 'green');
+    });
+}
 
         // 自动传送房主
         setTimeout(() => {
