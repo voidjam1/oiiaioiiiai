@@ -131,8 +131,13 @@ canvas {
 <script src="painter.js"></script>
 <script src="engine.js"></script>
 <script>
-    const board = new DrawingBoard('mainCanvas');
-    const engine = new GameEngine(board);
+    // 确保按顺序初始化
+const board = new DrawingBoard('mainCanvas', (data) => {
+    data.cat = 'paint'; // 给绘画数据打上标签
+    network.send(data); // 通过网络发出
+});
+
+const engine = new GameEngine(board);
 </script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 
