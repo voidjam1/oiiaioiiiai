@@ -4,19 +4,28 @@ class NetworkManager {
         this.conn = null;
         this.isHost = false;
         this.heartbeat = null;
+        this.myNickname = "玩家";
+    }
+
+    // 获取当前输入框的昵称
+    getNickname() {
+        const name = document.getElementById('my-nickname').value.trim();
+        return name || (this.isHost ? "房主" : "朋友");
     }
 
     createRoom() {
         this.isHost = true;
+        this.myNickname = this.getNickname();
+        engine.setSelfName(this.myNickname); // 设置引擎里的名字
+
         this.peer = new Peer();
         
-        // UI 更新：显示正在创建
         document.getElementById('lobby-btns').style.display = 'none';
         document.getElementById('room-info-display').style.display = 'block';
 
         this.peer.on('open', id => {
             document.getElementById('my-room-id').innerText = id;
-            engine.appendMsg('system', 'System', `房号已生成: ${id}`, 'blue');
+            engine.appendMsg('chat-list', '系统', `房间已创建，我是: ${this.myNickname}`, 'blue');
         });
 
         this.peer.on('connection', c => this.setupConnection(c));
@@ -25,9 +34,12 @@ class NetworkManager {
     joinRoom() {
         const id = document.getElementById('target-id').value.trim();
         if (!id) return alert("请输入房号");
-        this.isHost = false;
-        this.peer = new Peer();
         
+        this.isHost = false;
+        this.myNickname = this.getNickname();
+        engine.setSelfName(this.myNickname);
+
+        this.peer = new Peer();
         this.peer.on('open', () => {
             const c = this.peer.connect(id);
             this.setupConnection(c);
@@ -38,14 +50,13 @@ class NetworkManager {
         this.conn = conn;
         
         this.conn.on('open', () => {
-            // 关闭遮罩，进入游戏大厅
             document.getElementById('lobby-overlay').style.display = 'none';
-            engine.appendMsg('system', 'System', '✅ 连接成功！', 'green');
-            
-            // 触发引擎的连接回调
-            engine.onPlayerJoined(this.isHost);
+            engine.appendMsg('chat-list', '系统', '连接建立！正在交换名片...', 'green');
 
-            // 启动心跳
+            // 1. 发送握手包：把我的名字发给对方
+            this.send({ cat: 'handshake', name: this.myNickname });
+
+            // 心跳
             this.heartbeat = setInterval(() => {
                 if (this.conn.open) this.conn.send({ cat: 'heartbeat' });
             }, 3000);
@@ -53,14 +64,23 @@ class NetworkManager {
 
         this.conn.on('data', data => {
             if (data.cat === 'heartbeat') return;
-            // 路由数据到引擎
+            
+            // 2. 处理握手包
+            if (data.cat === 'handshake') {
+                engine.setOpponentName(data.name);
+                engine.appendMsg('chat-list', '系统', `玩家【${data.name}】已加入！`, 'green');
+                // 只有房主需要更新UI控制权
+                if (this.isHost) engine.onPlayerJoined(true);
+                else engine.onPlayerJoined(false);
+                return;
+            }
+
             engine.handlePacket(data);
         });
 
         this.conn.on('close', () => {
             clearInterval(this.heartbeat);
-            engine.appendMsg('system', 'System', '❌ 连接已断开', 'red');
-            alert("对方已断线");
+            engine.appendMsg('chat-list', '系统', '❌ 连接断开', 'red');
         });
     }
 
