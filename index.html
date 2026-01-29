@@ -3,95 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gartic Pro 最终稳定版</title>
+    <title>Gartic Pro 完整版</title>
     <style>
-        :root { --primary: #6c5ce7; --bg: #f5f6fa; }
+        :root { --primary: #6c5ce7; --bg: #f5f6fa; --chat-bg: #fff; --guess-bg: #ffeaa7; }
         * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; position: fixed; font-family: sans-serif; background: var(--bg); }
-        body { display: grid; grid-template-areas: "header header" "stage interaction"; grid-template-columns: 1fr 320px; grid-template-rows: 60px 1fr; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; position: fixed; font-family: "PingFang SC", sans-serif; background: var(--bg); }
         
-        header { grid-area: header; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 101; }
-        
-        /* 侧滑菜单核心 */
-        .side-panel { position: fixed; left: -260px; top: 60px; bottom: 0; width: 250px; background: white; z-index: 1000; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .side-panel.open { left: 0; }
-        #menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 999; }
-
-        .stage-area { grid-area: stage; position: relative; background: #fff; margin: 10px; border-radius: 12px; border: 2px solid var(--primary); overflow: hidden; }
-        canvas { touch-action: none; width: 100%; height: 100%; cursor: crosshair; }
-        
-        .interaction-panel { grid-area: interaction; display: flex; flex-direction: column; padding: 10px; gap: 10px; background: #eee; }
-        .msg-list { flex: 1; overflow-y: auto; background: #fff; padding: 10px; border-radius: 8px; font-size: 14px; border: 1px solid #ddd; }
-        #guess-list { background: #fff9db; height: 150px; flex: none; }
-        
-        .input-group { display: flex; gap: 5px; }
-        .input-group input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
-        
-        /* 按钮样式 */
-        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-
-        /* 初始遮罩 */
-        #lobby-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
-        
-        @media (max-width: 1024px) {
-            body { grid-template-areas: "header" "stage" "interaction"; grid-template-columns: 1fr; grid-template-rows: 60px 1fr 200px; }
-            .interaction-panel { height: 250px; }
+        /* 布局网格 */
+        body { display: grid; grid-template-areas: "header header" "stage side"; grid-template-columns: 1fr 300px; grid-template-rows: 60px 1fr; }
+        @media (max-width: 768px) {
+            body { grid-template-areas: "header" "stage" "interaction"; grid-template-columns: 1fr; grid-template-rows: 50px 1fr 220px; }
+            .side-panel { width: 80% !important; } /* 移动端侧滑更宽 */
         }
+
+        /* 顶部栏 */
+        header { grid-area: header; background: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 10; }
+        .score-board { display: flex; gap: 15px; font-weight: bold; font-size: 14px; }
+        .score-item { background: #f1f2f6; padding: 5px 10px; border-radius: 15px; }
+
+        /* 画板区 */
+        .stage-area { grid-area: stage; position: relative; margin: 10px; background: white; border-radius: 10px; border: 2px solid var(--primary); overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        canvas { touch-action: none; width: 100%; height: 100%; cursor: crosshair; }
+
+        /* 交互区（PC侧边/移动底部） */
+        .interaction-panel { grid-area: side; display: flex; flex-direction: column; padding: 10px; gap: 8px; background: #eee; border-left: 1px solid #ddd; }
+        
+        /* 分离的聊天框 */
+        .list-container { flex: 1; display: flex; flex-direction: column; gap: 5px; overflow: hidden; }
+        .msg-list { overflow-y: auto; padding: 8px; border-radius: 6px; font-size: 13px; }
+        #guess-list { height: 40%; background: var(--guess-bg); border: 2px dashed #fdcb6e; }
+        #chat-list { flex: 1; background: var(--chat-bg); border: 1px solid #ddd; }
+
+        .input-group { display: flex; gap: 5px; }
+        .input-group input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; outline: none; }
+        
+        /* 侧滑菜单 */
+        .side-menu { position: fixed; left: -100%; top: 0; bottom: 0; width: 280px; background: white; z-index: 1000; transition: 0.3s; box-shadow: 2px 0 20px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .side-menu.open { left: 0; }
+        .menu-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+        
+        /* 按钮与工具 */
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: #00b894; color: white; }
+        .btn-danger { background: #ff7675; color: white; }
+
+        /* 初始全屏遮罩 */
+        #lobby-overlay { position: fixed; inset: 0; background: var(--primary); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        
+        /* 工具栏 */
+        #painter-tools { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255,255,255,0.95); padding: 8px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
 
 <div id="lobby-overlay">
-    <h1>🎨 Gartic Pro</h1>
-    <button class="btn" style="background:white; color:var(--primary); padding:15px 30px;" onclick="network.createRoom()">🏠 创建房间</button>
-    <div id="room-id-display" style="display:none; margin-top: 20px;">
-        <p>房号（点击复制）:</p>
-        <code id="my-room-id" onclick="copyText(this.innerText)" style="background:rgba(0,0,0,0.2); padding:10px; border-radius:5px; cursor:pointer;">---</code>
+    <h1 style="margin-bottom: 30px;">🎨 Gartic Pro</h1>
+    <div id="lobby-btns">
+        <button class="btn" style="background:white; color:var(--primary); padding:15px 40px; font-size:18px;" onclick="network.createRoom()">🏠 创建房间</button>
+        <div style="margin: 20px;">或</div>
+        <div class="input-group" style="width: 260px;">
+            <input type="text" id="target-id" placeholder="输入好友房号">
+            <button class="btn btn-success" onclick="network.joinRoom()">🚀 加入</button>
+        </div>
     </div>
-    <div style="margin: 20px;">或</div>
-    <div class="input-group" style="width: 300px;">
-        <input type="text" id="target-id" placeholder="粘贴好友房号">
-        <button class="btn" style="background:#00b894; color:white;" onclick="network.joinRoom()">🚀 加入</button>
+    <div id="room-info-display" style="display:none; text-align:center;">
+        <p>房号已生成（点击复制）：</p>
+        <h2 id="my-room-id" onclick="copyText(this.innerText)" style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; cursor:pointer;">...</h2>
+        <p style="font-size:12px; opacity:0.8;">等待好友进入...</p>
     </div>
 </div>
 
 <header>
-    <button class="btn btn-primary" onclick="toggleMenu()">☰ 菜单</button>
-    <div id="room-info" style="cursor:pointer; font-size: 0.8rem;" onclick="copyRoomID()">房号: <span id="current-room-id">未连接</span></div>
-    <div id="word-display" style="font-weight: bold;">等待开始...</div>
-    <div id="timer">⏱️ 60s</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <button class="btn btn-primary" onclick="toggleMenu()">☰ 设置</button>
+        <div class="score-board">
+            <div class="score-item" style="color:var(--primary)">房主: <span id="score-host">0</span></div>
+            <div class="score-item" style="color:#00b894">朋友: <span id="score-guest">0</span></div>
+        </div>
+    </div>
+    <div id="game-status" style="font-weight:bold; color:#d63031;">等待开始</div>
+    <div id="timer">⏱️ --</div>
 </header>
 
-<div id="menu-overlay" onclick="toggleMenu()"></div>
-<aside class="side-panel">
-    <h3>⚙️ 游戏设置</h3>
-    <label>选择题库：</label>
-    <select id="theme-selector" style="padding:10px; border-radius:5px;"></select>
-    <button class="btn btn-primary" onclick="engine.startNewRound()">开始游戏 / 下一局</button>
+<div class="menu-overlay" onclick="toggleMenu()"></div>
+<aside class="side-menu">
+    <h3>⚙️ 房间设置</h3>
+    
+    <div id="host-controls">
+        <label>选择词库主题：</label>
+        <select id="theme-selector" style="width:100%; padding:8px; margin-bottom:10px;"></select>
+        
+        <label>获胜分数：</label>
+        <input type="number" id="max-score" value="30" style="width:100%; padding:8px; margin-bottom:10px;">
+        
+        <label>绘画限时(秒)：</label>
+        <input type="number" id="time-limit" value="60" style="width:100%; padding:8px; margin-bottom:20px;">
+        
+        <button id="start-btn" class="btn btn-success" style="width:100%; padding:12px;" onclick="engine.startGame()">🎬 开始新游戏</button>
+        <p style="font-size:12px; color:#666; margin-top:10px;">* 只有房主可以设置和开始</p>
+    </div>
+    
+    <div id="guest-controls" style="display:none; color:#666;">
+        <p>等待房主设置游戏规则...</p>
+    </div>
+
     <hr>
-    <p style="font-size: 12px; color: #666;">提示：房主点击开始后，系统将自动轮换绘画者。</p>
+    <button class="btn btn-danger" onclick="location.reload()">退出房间</button>
 </aside>
 
 <main class="stage-area">
     <canvas id="mainCanvas"></canvas>
-    <div id="painter-tools" style="position:absolute; bottom:15px; left:15px; display:none; gap:10px; background:rgba(255,255,255,0.9); padding:12px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-        <input type="color" id="colorPicker" value="#6c5ce7">
-        <input type="range" id="sizePicker" min="1" max="20" value="5">
-        <button class="btn" onclick="board.clear()">🧹 清空</button>
+    
+    <div id="painter-tools">
+        <input type="color" id="colorPicker" value="#000000">
+        <input type="range" id="sizePicker" min="2" max="20" value="5">
+        <button class="btn btn-danger" style="padding:5px 10px; font-size:12px;" onclick="board.clear()">🗑️</button>
+        <button class="btn btn-success" id="skip-btn" style="padding:5px 10px; font-size:12px;" onclick="engine.endRound(false)">⏭️ 跳过</button>
+    </div>
+
+    <div id="round-overlay" style="position:absolute; inset:0; background:rgba(255,255,255,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:50; display:none;">
+        <h2 id="round-msg">题目是...</h2>
+        <h1 id="round-word" style="color:var(--primary); font-size:40px; margin:20px 0;">APPLE</h1>
+        <button id="next-round-btn" class="btn btn-primary" style="display:none;" onclick="engine.nextRound()">➡️ 继续下一轮</button>
     </div>
 </main>
 
 <div class="interaction-panel">
-    <div class="msg-list" id="guess-list"></div>
-    <div class="input-group">
-        <input type="text" id="guess-input" placeholder="输入答案..." onkeypress="if(event.key==='Enter') engine.send('guess')">
-        <button class="btn" style="background:#f1c40f;" onclick="engine.send('guess')">🎯</button>
+    <div class="list-container">
+        <div id="guess-list">
+            <div style="color:#aaa; text-align:center; font-size:12px;">--- 猜题记录 ---</div>
+        </div>
+        <div id="chat-list">
+            <div style="color:#aaa; text-align:center; font-size:12px;">--- 聊天室 ---</div>
+        </div>
     </div>
-    <div class="msg-list" id="chat-list"></div>
+
     <div class="input-group">
-        <input type="text" id="chat-input" placeholder="聊天..." onkeypress="if(event.key==='Enter') engine.send('chat')">
-        <button class="btn btn-primary" onclick="engine.send('chat')">➤</button>
+        <input type="text" id="input-box" placeholder="输入聊天或答案..." onkeypress="if(event.key==='Enter') engine.handleInput()">
+        <button class="btn btn-primary" onclick="engine.handleInput()">发送</button>
     </div>
 </div>
 
@@ -100,6 +150,7 @@
 <script src="network.js"></script>
 <script src="engine.js"></script>
 <script>
+    // 初始化
     const board = new DrawingBoard('mainCanvas', (data) => {
         data.cat = 'paint';
         network.send(data);
@@ -107,21 +158,18 @@
     const engine = new GameEngine(board);
 
     function toggleMenu() {
-        const panel = document.querySelector('.side-panel');
-        const overlay = document.getElementById('menu-overlay');
-        panel.classList.toggle('open');
-        overlay.style.display = panel.classList.contains('open') ? 'block' : 'none';
+        const menu = document.querySelector('.side-menu');
+        const overlay = document.querySelector('.menu-overlay');
+        const isOpen = menu.classList.contains('open');
+        menu.classList.toggle('open');
+        overlay.style.display = isOpen ? 'none' : 'block';
     }
 
     function copyText(text) {
-        navigator.clipboard.writeText(text).then(() => alert("房号已复制！快发给朋友吧 🚀"));
+        navigator.clipboard.writeText(text).then(() => alert("✅ 房号已复制！"));
     }
-
-    function copyRoomID() {
-        const id = document.getElementById('current-room-id').innerText;
-        if(id !== "未连接") copyText(id);
-    }
-
+    
+    // 页面加载后自动载入词库
     window.onload = () => engine.initThemes();
 </script>
 </body>
